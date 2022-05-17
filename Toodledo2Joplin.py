@@ -2,6 +2,8 @@
 # Needs joppy.api from https://github.com/foxmask/joplin-api
 
 
+# sk,17,05,22 Ordner angelegt
+
 from joppy.api import Api
 import argparse
 import os, sys
@@ -80,6 +82,24 @@ def create_joplin_tags(api, toodledo_tags):
 
     return local_joplin_tags
         
+
+def create_sub_notebooks(api, toodle_notebook_id, folders):
+    nbooks = api.get_notebooks()
+    for folder in folders:
+        notebook_is_present = False
+        for notebook in nbooks.get('items'):
+            tmp_title = notebook.get('title')
+            if tmp_title == folder:
+                notebook_is_present = True
+                
+        if not notebook_is_present:
+            nb_id = api.add_notebook()
+            api.modify_notebook(nb_id, title=folder, parent_id=toodle_notebook_id)
+            print('Created Notebook: ' +  folder + ' id: ' + nb_id)  
+        else:
+            print('Notebook: ' +  folder + ' id: ' + str(nb_id) + ' already present!')  
+
+
 def create_toodledo_notebook(api):
     nbooks = api.get_notebooks()
     toodle_notebook_is_present = False
@@ -115,6 +135,8 @@ api = Api(token=API_TOKEN)
 
 nb_id = create_toodledo_notebook(api)
 print('Notebook: ' +  toodle_notebook + ' id: ' + nb_id)  
+
+create_sub_notebooks(api, nb_id, folders)
 
 
 

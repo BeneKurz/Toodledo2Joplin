@@ -4,14 +4,14 @@
 
 from joppy.api import Api
 import argparse
-import os
+import os, sys
 import xml.etree.ElementTree as ET
 
 # The API_TOKEN is created from the Joplin Desktop App using the Web Clipper
 API_TOKEN='b0ebe036b435d41dbdc3dce5048fbebeb88f92e8acc5fdb586c38587b516c831e09e71090ea06b320bce05bb197a4fd3949906e90df41ccf90710882e3c153a5'
 
 root = ET.parse('toodledo_backup.xml').getroot()
-root_notebook = 'Toodledo'
+toodle_notebook = 'Toodledo'
 
 
 
@@ -80,6 +80,29 @@ def create_joplin_tags(api, toodledo_tags):
 
     return local_joplin_tags
         
+def create_toodledo_notebook(api):
+    nbooks = api.get_notebooks()
+    toodle_notebook_is_present = False
+    toodle_notebook_id = None
+
+    print(str(nbooks))
+    for notebook in nbooks.get('items'):
+        tmp_title = notebook.get('title')
+        if tmp_title == toodle_notebook:
+            toodle_notebook_is_present = True
+            toodle_notebook_id = notebook.get('id')
+
+
+    if not toodle_notebook_is_present:
+        nb_id = api.add_notebook()
+        api.modify_notebook(nb_id, title=toodle_notebook)
+        print('Created Notebook: ' +  toodle_notebook + ' id: ' + nb_id)  
+        return nb_id
+    else:
+
+        return toodle_notebook_id
+        sys.exit(-1) 
+
 
 
 folders= get_folders()
@@ -89,7 +112,13 @@ print('Folders: '+ str(folders))
 
 api = Api(token=API_TOKEN)
 
-create_joplin_tags(api,tags)
+
+nb_id = create_toodledo_notebook(api)
+print('Notebook: ' +  toodle_notebook + ' id: ' + nb_id)  
+
+
+
+#create_joplin_tags(api,tags)
 
 
 

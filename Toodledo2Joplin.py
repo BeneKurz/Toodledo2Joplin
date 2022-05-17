@@ -1,5 +1,5 @@
-# Fill Joplin Database with toodldo Backup
-# https://github.com/foxmask/joplin-api
+# Fill Joplin Database with Toodeldo Backup
+# Needs joppy.api from https://github.com/foxmask/joplin-api
 
 
 from joppy.api import Api

@@ -16,7 +16,7 @@ API_TOKEN_OFFICE='b0ebe036b435d41dbdc3dce5048fbebeb88f92e8acc5fdb586c38587b516c8
 API_TOKEN=API_TOKEN_NB
 
 
-root = ET.parse('toodledo_backup.xml').getroot()
+root = ET.parse('backup_toodledo.xml').getroot()
 toodle_notebook = 'Toodledo'
 
 

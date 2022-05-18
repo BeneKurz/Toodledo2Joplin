@@ -2,10 +2,12 @@
 # Needs joppy.api from https://github.com/marph91/joppy
 
 
-from joppy.api import Api
+from joppy.api import Api as JOPLIN_API
 import argparse
 import os, sys
 import xml.etree.ElementTree as ET
+import xmltodict
+from pprint import pprint
 
 # The API_TOKEN is created from the Joplin Desktop App using the Web Clipper
 # Put the Token into the file named here
@@ -17,6 +19,8 @@ TOODLEDO_IMPORTFILE='backup_toodledo.xml'
 # All Folders from Toodledo are put into this notebook:
 TOODLEDO_ROOT_NOTEBOOK = 'Toodledo'
 
+XML_ROOT=''
+
 try:     
     with open(TOKEN_FILE) as f:
         lines = f.readlines()
@@ -25,25 +29,20 @@ except IOError:
     print('Tokenfile ' + TOKEN_FILE + ' not found')
     sys.exit(-1)   
 
-try:
-    root = ET.parse(TOODLEDO_IMPORTFILE).getroot()
-except FileNotFoundError:
-    print('Toodledo Importfile ' + TOODLEDO_IMPORTFILE + ' not found')
-    sys.exit(-1)
 
-def get_tags():    
+def get_tags(the_xml_root):    
     tags= set()
     #for tmp_tags in root.findall('item/tag'):
-    for tmp_tags in root.findall('tasks/task/tag'):
+    for tmp_tags in the_xml_root.findall('tasks/task/tag'):
         #value = type_tag.get('foobar')
         if tmp_tags.text:        
             for one_tag in tmp_tags.text.split(','):
                 tags.add(one_tag.lower())
     return tags
 
-def get_folders():
+def get_folders(the_xml_root):
     folders = set()        
-    for tmp_folder in root.findall('folders/folder/name'):
+    for tmp_folder in the_xml_root.findall('folders/folder/name'):
         if tmp_folder.text:
             folders.add(tmp_folder.text)
     return folders
@@ -140,14 +139,55 @@ def create_toodledo_notebook(api):
         return toodle_notebook_id
         sys.exit(-1) 
 
+def make_subdict(element, taglist):
+    tmp_dict = {}
+    for tag in taglist:
+        tmp_dict[tag] = element.find(tag).text
+    return tmp_dict
+
+def get_todledo_entries(api, xml_root):
+    # Siehe Finding interesting elements: https://docs.python.org/3/library/xml.etree.elementtree.html
+    for task in xml_root.findall('tasks/task'):
+        taglist = ['title', 'folder', 'date_added', 'date_modified', 'parent', 'tag','note']
+        subdict = make_subdict(task,taglist)
+        print(str(subdict))
+
+        
+        bene = 1234
 
 
-folders= get_folders()
-tags = get_tags()
+    # entries = []        
+    # for task in the_xml_root.findall('tasks/task'):
+    #     x=(task.tag)
+    #     z=list(x)
+    #     for i in z:
+    #         print(x[i])
+
+        # bene = xmltodict.parse(task)
+        # pprint(bene)
+        # title = task.findall('title/attrib')
+        # print(str(title))
+
+        # task_title = task.get('title')
+        # print(str(task_title))
+
+    
+
+# main
+try:
+    XML_ROOT = ET.parse(TOODLEDO_IMPORTFILE).getroot()
+except FileNotFoundError:
+    print('Toodledo Importfile ' + TOODLEDO_IMPORTFILE + ' not found')
+    sys.exit(-1)
+
+folders= get_folders(XML_ROOT)
+tags = get_tags(XML_ROOT)
 print('Tags: '+ str(tags))
 print('Folders: '+ str(folders))
 
-api = Api(token=API_TOKEN)
+api = JOPLIN_API(token=API_TOKEN)
+
+#bene = xmltodict.parse(XML_ROOT)
 
 
 nb_id = create_toodledo_notebook(api)
@@ -155,6 +195,15 @@ print('Notebook: ' +  TOODLEDO_ROOT_NOTEBOOK + ' id: ' + nb_id)
 
 notebooks_cache = create_sub_notebooks(api, nb_id, folders)
 print('Notebooks Cache: ' + str(notebooks_cache))
+
+# Iterate over Tasks and create them as Entries
+for task in XML_ROOT.findall('tasks/task'):
+        taglist = ['title', 'folder', 'date_added', 'date_modified', 'parent', 'tag','note']
+        subdict = make_subdict(task,taglist)
+        print(str(subdict))
+
+
+# get_todledo_entries(api, XML_ROOT)
 
 
 

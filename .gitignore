@@ -1,4 +1,5 @@
-toodledo_backup.xml
+backup_toodledo.xml
+JOPLIN_API_TOKEN.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

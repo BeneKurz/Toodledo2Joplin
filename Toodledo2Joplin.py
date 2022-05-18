@@ -23,15 +23,13 @@ try:
     API_TOKEN=lines[0]
 except IOError:
     print('Tokenfile ' + TOKEN_FILE + ' not found')
-    sys.exit(-1)
-    
+    sys.exit(-1)   
 
 try:
     root = ET.parse(TOODLEDO_IMPORTFILE).getroot()
 except FileNotFoundError:
     print('Toodledo Importfile ' + TOODLEDO_IMPORTFILE + ' not found')
     sys.exit(-1)
-
 
 def get_tags():    
     tags= set()
@@ -51,10 +49,7 @@ def get_folders():
     return folders
 
 
-def create_joplin_folders():
-    pass
-
-# Das geht nicht so, 
+# Das geht nicht so, Tags können nur einer Notiz zugeordnet werden
 def create_joplin_tags(api, toodledo_tags):
     joplin_tags_cache = []
     actual_joplin_tags_dict_array = api.get_all_tags()
@@ -99,6 +94,7 @@ def create_joplin_tags(api, toodledo_tags):
         
 
 def create_sub_notebooks(api, toodle_notebook_id, folders):
+    tmp_notebooks_cache= []
     nbooks = api.get_notebooks()
     for folder in folders:
         notebook_is_present = False
@@ -106,13 +102,19 @@ def create_sub_notebooks(api, toodle_notebook_id, folders):
             tmp_title = notebook.get('title')
             if tmp_title == folder:
                 notebook_is_present = True
+                tmp_nb={'title' : tmp_title, 'id' : notebook.get('id')}
+                tmp_notebooks_cache.append(tmp_nb)
+
                 
         if not notebook_is_present:
             nb_id = api.add_notebook()
             api.modify_notebook(nb_id, title=folder, parent_id=toodle_notebook_id)
-            print('Created Notebook: ' +  folder + ' id: ' + nb_id)  
+            tmp_nb={'title' : folder, 'id' : nb_id}
+            tmp_notebooks_cache.append(tmp_nb)
+            print('Created Notebook: ' + str(tmp_nb))  
         else:
-            print('Notebook: ' +  folder + ' id: ' + str(nb_id) + ' already present!')  
+            print('Notebook: ' +  folder + ' already present!')  
+    return tmp_notebooks_cache
 
 
 def create_toodledo_notebook(api):
@@ -151,7 +153,8 @@ api = Api(token=API_TOKEN)
 nb_id = create_toodledo_notebook(api)
 print('Notebook: ' +  TOODLEDO_ROOT_NOTEBOOK + ' id: ' + nb_id)  
 
-create_sub_notebooks(api, nb_id, folders)
+notebooks_cache = create_sub_notebooks(api, nb_id, folders)
+print('Notebooks Cache: ' + str(notebooks_cache))
 
 
 

@@ -7,10 +7,12 @@ import argparse
 import os, sys
 import xml.etree.ElementTree as ET
 
+TOKEN_FILE='JOPLIN_API_TOKEN.txt'
 # The API_TOKEN is created from the Joplin Desktop App using the Web Clipper
-API_TOKEN_NB='6bce6614f087276f9b8f2575c645641c00cec0af5860bc459860d43af48a530a93efa2dc678d171ebd06644eb8a5fd9f06e07422c990fd3dc4ff9e88c63decbf'
-API_TOKEN_OFFICE='b0ebe036b435d41dbdc3dce5048fbebeb88f92e8acc5fdb586c38587b516c831e09e71090ea06b320bce05bb197a4fd3949906e90df41ccf90710882e3c153a5'
-with open('JOPLIN_API_TOKEN.txt') as f:
+if not os.path.exists(TOKEN_FILE):
+    print('Tokenfile ' + TOKEN_FILE + ' not found')
+    sys.exit(-1)
+with open(TOKEN_FILE) as f:
     lines = f.readlines()
 API_TOKEN=lines[0]
 

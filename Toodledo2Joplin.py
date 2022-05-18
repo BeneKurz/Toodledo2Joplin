@@ -7,20 +7,30 @@ import argparse
 import os, sys
 import xml.etree.ElementTree as ET
 
-TOKEN_FILE='JOPLIN_API_TOKEN.txt'
 # The API_TOKEN is created from the Joplin Desktop App using the Web Clipper
-if not os.path.exists(TOKEN_FILE):
+# Put the Token into the file named here
+TOKEN_FILE='JOPLIN_API_TOKEN.txt'
+
+# Toodeldo Backup file created from here: https://www.toodledo.com/tools/import_export.php
+TOODLEDO_IMPORTFILE='backup_toodledo.xml'
+
+# All Folders from Toodledo are put into this notebook:
+TOODLEDO_ROOT_NOTEBOOK = 'Toodledo'
+
+try:     
+    with open(TOKEN_FILE) as f:
+        lines = f.readlines()
+    API_TOKEN=lines[0]
+except IOError:
     print('Tokenfile ' + TOKEN_FILE + ' not found')
     sys.exit(-1)
-with open(TOKEN_FILE) as f:
-    lines = f.readlines()
-API_TOKEN=lines[0]
+    
 
-
-root = ET.parse('backup_toodledo.xml').getroot()
-toodle_notebook = 'Toodledo'
-
-
+try:
+    root = ET.parse(TOODLEDO_IMPORTFILE).getroot()
+except FileNotFoundError:
+    print('Toodledo Importfile ' + TOODLEDO_IMPORTFILE + ' not found')
+    sys.exit(-1)
 
 
 def get_tags():    
@@ -113,15 +123,15 @@ def create_toodledo_notebook(api):
     print(str(nbooks))
     for notebook in nbooks.get('items'):
         tmp_title = notebook.get('title')
-        if tmp_title == toodle_notebook:
+        if tmp_title == TOODLEDO_ROOT_NOTEBOOK:
             toodle_notebook_is_present = True
             toodle_notebook_id = notebook.get('id')
 
 
     if not toodle_notebook_is_present:
         nb_id = api.add_notebook()
-        api.modify_notebook(nb_id, title=toodle_notebook)
-        print('Created Notebook: ' +  toodle_notebook + ' id: ' + nb_id)  
+        api.modify_notebook(nb_id, title=TOODLEDO_ROOT_NOTEBOOK)
+        print('Created Notebook: ' +  TOODLEDO_ROOT_NOTEBOOK + ' id: ' + nb_id)  
         return nb_id
     else:
 
@@ -139,7 +149,7 @@ api = Api(token=API_TOKEN)
 
 
 nb_id = create_toodledo_notebook(api)
-print('Notebook: ' +  toodle_notebook + ' id: ' + nb_id)  
+print('Notebook: ' +  TOODLEDO_ROOT_NOTEBOOK + ' id: ' + nb_id)  
 
 create_sub_notebooks(api, nb_id, folders)
 

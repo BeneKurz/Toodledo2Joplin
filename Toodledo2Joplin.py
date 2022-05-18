@@ -1,8 +1,9 @@
 # Fill Joplin Database with Toodeldo Backup file created from here: https://www.toodledo.com/tools/import_export.php
-# Needs joppy.api from https://github.com/foxmask/joplin-api
+# Needs joppy.api from https://github.com/marph91/joppy
 
 
 # sk,17,05,22 Ordner angelegt
+# sk,18,05,22 joplin-api --> joppy
 
 from joppy.api import Api
 import argparse
@@ -10,7 +11,10 @@ import os, sys
 import xml.etree.ElementTree as ET
 
 # The API_TOKEN is created from the Joplin Desktop App using the Web Clipper
-API_TOKEN='b0ebe036b435d41dbdc3dce5048fbebeb88f92e8acc5fdb586c38587b516c831e09e71090ea06b320bce05bb197a4fd3949906e90df41ccf90710882e3c153a5'
+API_TOKEN_NB='6bce6614f087276f9b8f2575c645641c00cec0af5860bc459860d43af48a530a93efa2dc678d171ebd06644eb8a5fd9f06e07422c990fd3dc4ff9e88c63decbf'
+API_TOKEN_OFFICE='b0ebe036b435d41dbdc3dce5048fbebeb88f92e8acc5fdb586c38587b516c831e09e71090ea06b320bce05bb197a4fd3949906e90df41ccf90710882e3c153a5'
+API_TOKEN=API_TOKEN_NB
+
 
 root = ET.parse('toodledo_backup.xml').getroot()
 toodle_notebook = 'Toodledo'

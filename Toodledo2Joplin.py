@@ -17,7 +17,6 @@ TOODLEDO_IMPORTFILE='backup_toodledo.xml'
 
 # All Folders from Toodledo are put into this notebook:
 TOODLEDO_ROOT_TASK = 'Toodledo'
-TOODLEDO_ROOT_NOTEBOOK = 'Toodledo_Notes'
 XML_ROOT=''
 
 try:     

@@ -197,11 +197,23 @@ notebooks_cache = create_sub_notebooks(api, nb_id, folders)
 print('Notebooks Cache: ' + str(notebooks_cache))
 
 # Iterate over Tasks and create them as Entries
+task_entries=[]
 for task in XML_ROOT.findall('tasks/task'):
         taglist = ['title', 'folder', 'date_added', 'date_modified', 'parent', 'tag','note']
-        subdict = make_subdict(task,taglist)
-        print(str(subdict))
+        task_dict = make_subdict(task,taglist)
+        task_entries.append(task_dict)
+        print(str(task_dict))
 
+notebook_entries=[]
+for nb_entry in XML_ROOT.findall('notebooks/page'):
+        taglist = ['title', 'folder', 'date_added', 'date_modified','note']
+        nb_dict = make_subdict(nb_entry,taglist)
+        notebook_entries.append(nb_dict)
+        print(str(nb_dict))
+
+
+print('Number of Tasks: ' + str(len(task_entries)))
+print('Number of notebook-Entries: ' + str(len(notebook_entries)))
 
 # get_todledo_entries(api, XML_ROOT)
 

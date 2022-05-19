@@ -17,7 +17,8 @@ TOKEN_FILE='JOPLIN_API_TOKEN.txt'
 TOODLEDO_IMPORTFILE='backup_toodledo.xml'
 
 # All Folders from Toodledo are put into this notebook:
-TOODLEDO_ROOT_NOTEBOOK = 'Toodledo'
+TOODLEDO_ROOT_TASK = 'Toodledo'
+TOODLEDO_ROOT_NOTEBOOK = 'Toodledo_Notes'
 
 XML_ROOT=''
 
@@ -40,15 +41,16 @@ def get_tags(the_xml_root):
                 tags.add(one_tag.lower())
     return tags
 
-def get_folders(the_xml_root):
-    folders = set()        
-    for tmp_folder in the_xml_root.findall('folders/folder/name'):
-        if tmp_folder.text:
-            folders.add(tmp_folder.text)
+def get_toodledo_folders(the_xml_root):
+    folders = {}
+    for element in the_xml_root.findall('folders/folder'):
+        name = element.find('name').text
+        id = element.find('id').text
+        folders.update( {id: name})
     return folders
 
 
-# Das geht nicht so, Tags können nur einer Notiz zugeordnet werden
+# Das geht nicht so, Tags koennen nur einer Notiz zugeordnet werden
 def create_joplin_tags(api, toodledo_tags):
     joplin_tags_cache = []
     actual_joplin_tags_dict_array = api.get_all_tags()
@@ -93,7 +95,7 @@ def create_joplin_tags(api, toodledo_tags):
         
 
 def create_sub_notebooks(api, toodle_notebook_id, folders):
-    tmp_notebooks_cache= []
+    tmp_notebooks_cache= {}
     nbooks = api.get_notebooks()
     for folder in folders:
         notebook_is_present = False
@@ -101,22 +103,24 @@ def create_sub_notebooks(api, toodle_notebook_id, folders):
             tmp_title = notebook.get('title')
             if tmp_title == folder:
                 notebook_is_present = True
-                tmp_nb={'title' : tmp_title, 'id' : notebook.get('id')}
-                tmp_notebooks_cache.append(tmp_nb)
+                #tmp_nb={'title' : tmp_title, 'id' : notebook.get('id')}
+                tmp_notebooks_cache[tmp_title] = notebook.get('id')
 
                 
         if not notebook_is_present:
             nb_id = api.add_notebook()
             api.modify_notebook(nb_id, title=folder, parent_id=toodle_notebook_id)
-            tmp_nb={'title' : folder, 'id' : nb_id}
-            tmp_notebooks_cache.append(tmp_nb)
+            tmp_nb={folder : nb_id}
+            tmp_notebooks_cache.udpate(tmp_nb)
+
+            #tmp_notebooks_cache.append(tmp_nb)
             print('Created Notebook: ' + str(tmp_nb))  
         else:
             print('Notebook: ' +  folder + ' already present!')  
     return tmp_notebooks_cache
 
 
-def create_toodledo_notebook(api):
+def create_toodledo_notebook(api, root_task_name):
     nbooks = api.get_notebooks()
     toodle_notebook_is_present = False
     toodle_notebook_id = None
@@ -124,15 +128,15 @@ def create_toodledo_notebook(api):
     print(str(nbooks))
     for notebook in nbooks.get('items'):
         tmp_title = notebook.get('title')
-        if tmp_title == TOODLEDO_ROOT_NOTEBOOK:
+        if tmp_title == root_task_name:
             toodle_notebook_is_present = True
             toodle_notebook_id = notebook.get('id')
 
 
     if not toodle_notebook_is_present:
         nb_id = api.add_notebook()
-        api.modify_notebook(nb_id, title=TOODLEDO_ROOT_NOTEBOOK)
-        print('Created Notebook: ' +  TOODLEDO_ROOT_NOTEBOOK + ' id: ' + nb_id)  
+        api.modify_notebook(nb_id, title=root_task_name)
+        print('Created Root Task Notebook: ' +  root_task_name + ' id: ' + nb_id)  
         return nb_id
     else:
 
@@ -171,7 +175,18 @@ def get_todledo_entries(api, xml_root):
         # task_title = task.get('title')
         # print(str(task_title))
 
+def create_joplin_entries(api, root_note_id, toodledo_folders, notebooks_cache, notebook_entries):
+     for nb_entry in notebook_entries:
+        too_folder_id= nb_entry.get('folder')
+        too_title= nb_entry.get('title')
+        too_note= nb_entry.get('note')
+        too_filder_name = toodledo_folders.get(too_folder_id) 
+        joplin_folder_id = notebooks_cache.get(too_filder_name)       
     
+        note_id=api.add_note(parent_id=joplin_folder_id, title=too_title, body=too_note)
+        #api.modify_note(note_id, parent_id=joplin_folder_id, title=nb_entry.get('folder'))
+        print('Added ' + too_title + ', id: ' + note_id)
+        bene=0
 
 # main
 try:
@@ -180,21 +195,27 @@ except FileNotFoundError:
     print('Toodledo Importfile ' + TOODLEDO_IMPORTFILE + ' not found')
     sys.exit(-1)
 
-folders= get_folders(XML_ROOT)
+toodledo_folders= get_toodledo_folders(XML_ROOT)
 tags = get_tags(XML_ROOT)
 print('Tags: '+ str(tags))
-print('Folders: '+ str(folders))
+print('Folders: '+ str(toodledo_folders))
 
 api = JOPLIN_API(token=API_TOKEN)
 
 #bene = xmltodict.parse(XML_ROOT)
 
 
-nb_id = create_toodledo_notebook(api)
-print('Notebook: ' +  TOODLEDO_ROOT_NOTEBOOK + ' id: ' + nb_id)  
+root_task_id = create_toodledo_notebook(api, TOODLEDO_ROOT_TASK)
+print('Root Task id: ' +  TOODLEDO_ROOT_TASK + ' id: ' + root_task_id)  
 
-notebooks_cache = create_sub_notebooks(api, nb_id, folders)
+root_note_id = create_toodledo_notebook(api, TOODLEDO_ROOT_NOTEBOOK)
+print('Root Note id: ' +  TOODLEDO_ROOT_TASK + ' id: ' + root_note_id)  
+
+notebooks_cache = create_sub_notebooks(api, root_task_id, toodledo_folders.values())
 print('Notebooks Cache: ' + str(notebooks_cache))
+
+
+
 
 # Iterate over Tasks and create them as Entries
 task_entries=[]
@@ -202,22 +223,22 @@ for task in XML_ROOT.findall('tasks/task'):
         taglist = ['title', 'folder', 'date_added', 'date_modified', 'parent', 'tag','note']
         task_dict = make_subdict(task,taglist)
         task_entries.append(task_dict)
-        print(str(task_dict))
+        #print(str(task_dict))
 
 notebook_entries=[]
 for nb_entry in XML_ROOT.findall('notebooks/page'):
         taglist = ['title', 'folder', 'date_added', 'date_modified','note']
         nb_dict = make_subdict(nb_entry,taglist)
         notebook_entries.append(nb_dict)
-        print(str(nb_dict))
+        # print(str(nb_dict))
+
 
 
 print('Number of Tasks: ' + str(len(task_entries)))
 print('Number of notebook-Entries: ' + str(len(notebook_entries)))
 
-# get_todledo_entries(api, XML_ROOT)
 
-
+create_joplin_entries(api, root_note_id, toodledo_folders, notebooks_cache, notebook_entries)
 
 #create_joplin_tags(api,tags)
 

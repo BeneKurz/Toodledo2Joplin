@@ -1,6 +1,6 @@
 # Toodledo2Joplin
 
-Import ToodleDo Backup into Joplin Database
+Import Backup of Tasks or Notes created with https://www.toodledo.com to Joplin https://joplinapp.org/
 
 You need:
 
@@ -11,4 +11,8 @@ You need:
 Put the Name of the Toodeldo Backup file into the Variable TOKEN_FILE and put Toodeldo Backup file into the same folder as the main script.
 Put the API_TOKEN is created from the Joplin Desktop App into the Variable TOKEN_FILE
 
-Start the script, goot luck!
+Start the script, good luck!
+
+If You find a problem, please open an issue.
+
+Bene Kurz

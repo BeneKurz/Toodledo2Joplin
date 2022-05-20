@@ -7,6 +7,7 @@ import argparse
 import os, sys
 import xml.etree.ElementTree as ET
 from pprint import pprint
+import argparse
 
 # The API_TOKEN is created from the Joplin Desktop App using the Web Clipper
 # Put the Token into the file named here
@@ -86,17 +87,23 @@ def make_subdict(element, taglist):
 
 def import_toodledo_notes(api, root_note_id, toodledo_folders, notebooks_cache, notebook_entries):
     no_of_entries = len(notebook_entries)
+    print('Number of Toodledo Notes: ' + str(no_of_entries))
+
     for index, nb_entry in enumerate(notebook_entries):
         too_folder_id= nb_entry.get('folder')
         too_title= nb_entry.get('title')
         too_note= nb_entry.get('note')
+        too_date_created= nb_entry.get('date_added') + '000'
+        too_date_modified= nb_entry.get('date_modified') + '000'
+
         too_folder_name = toodledo_folders.get(too_folder_id) 
         joplin_folder_id = notebooks_cache.get(too_folder_name)       
-        note_id=api.add_note(parent_id=joplin_folder_id, title=too_title, body=too_note)
+        note_id=api.add_note(parent_id=joplin_folder_id, title=too_title, body=too_note, created_time=too_date_created, user_created_time=too_date_created, updated_time=too_date_modified, user_updated_time=too_date_modified)
         print(str(index) + '/' +str(no_of_entries) + ' Added Note ' + too_title)       
 
 def import_toodledo_tasks(api, root_note_id, toodledo_folders, notebooks_cache, notebook_entries):
     no_of_entries = len(notebook_entries)
+    print('Number of Toodledo Tasks: ' + str(no_of_entries))
 
     # Get existing tags
     tags_cache= {} 
@@ -112,6 +119,8 @@ def import_toodledo_tasks(api, root_note_id, toodledo_folders, notebooks_cache, 
         too_title= entry.get('title')
         too_note= entry.get('note')
         too_tags= entry.get('tag')
+        too_date_created= entry.get('date_added') + '000'
+        too_date_modified= entry.get('date_modified') + '000'
         if too_tags:
             too_tags= entry.get('tag').split(',')
         else:
@@ -119,7 +128,7 @@ def import_toodledo_tasks(api, root_note_id, toodledo_folders, notebooks_cache, 
 
         too_folder_name = toodledo_folders.get(too_folder_id) 
         joplin_folder_id = notebooks_cache.get(too_folder_name)           
-        note_id=api.add_note(parent_id=joplin_folder_id, title=too_title, body=too_note)
+        note_id=api.add_note(parent_id=joplin_folder_id, title=too_title, body=too_note, created_time=too_date_created, user_created_time=too_date_created, updated_time=too_date_modified, user_updated_time=too_date_modified)
         for tag_title in too_tags:
             the_tag_title = tag_title.lower().strip()
             tag_id = tags_cache.get(the_tag_title)
@@ -130,7 +139,7 @@ def import_toodledo_tasks(api, root_note_id, toodledo_folders, notebooks_cache, 
                 tags_cache.update( {the_tag_title: tag_id})
                 api.add_tag_to_note(note_id=note_id, tag_id=tag_id)
             print('Added Tag ' + the_tag_title + ' to Note: ' + too_title)
-        print(str(index) + '/' +str(no_of_entries) + ' Added Task ' + too_title)
+        print(str(index) + '/' +str(no_of_entries) + ' Added Task ' + too_title + ' id: ' + note_id)
 
 # main
 if __name__ == "__main__":
@@ -156,31 +165,23 @@ if __name__ == "__main__":
     api = JOPLIN_API(token=API_TOKEN)
 
     root_task_id = create_toodledo_notebook(api, TOODLEDO_ROOT_TASK)
-    # print('Root Task id: ' +  TOODLEDO_ROOT_TASK + ' id: ' + root_task_id)  
-
-    #Wird nicht meht gebraucht
-    #root_note_id = create_toodledo_notebook(api, TOODLEDO_ROOT_NOTEBOOK)
-    #print('Root Note id: ' +  TOODLEDO_ROOT_TASK + ' id: ' + root_note_id)  
 
     folder_cache = create_sub_folders(api, root_task_id, toodledo_folders.values())
     print('Notebooks Cache: ' + str(folder_cache))
 
-    # Iterate over Tasks and create them as Entries
+    # Iterate over Toodledo Tasks
     task_entries=[]
     for task in XML_ROOT.findall('tasks/task'):
             taglist = ['title', 'folder', 'date_added', 'date_modified', 'parent', 'tag','note']
             task_dict = make_subdict(task,taglist)
             task_entries.append(task_dict)
 
+    # Iterate over Toodledo Notes
     notebook_entries=[]
     for nb_entry in XML_ROOT.findall('notebooks/page'):
             taglist = ['title', 'folder', 'date_added', 'date_modified','note']
             nb_dict = make_subdict(nb_entry,taglist)
             notebook_entries.append(nb_dict)
-
-    print('Number of Toodledo Tasks: ' + str(len(task_entries)))
-    print('Number of Toodledo Notes: ' + str(len(notebook_entries)))
-
 
     import_toodledo_notes(api, root_task_id, toodledo_folders, folder_cache, notebook_entries)
 

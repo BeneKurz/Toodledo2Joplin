@@ -1,13 +1,10 @@
 # Fill Joplin Database with Toodeldo Backup file created from here: https://www.toodledo.com/tools/import_export.php
 # Needs joppy.api from https://github.com/marph91/joppy
-
+# Save Entries with no folder in Folder named "NoFolder"
 
 from joppy.api import Api as JOPLIN_API
-import argparse
-import os, sys
+import sys
 import xml.etree.ElementTree as ET
-from pprint import pprint
-import argparse
 
 # The API_TOKEN is created from the Joplin Desktop App using the Web Clipper
 # Put the Token into the file named here
@@ -35,6 +32,8 @@ def get_toodledo_folders(the_xml_root):
         name = element.find('name').text
         id = element.find('id').text
         folders.update( {id: name})
+    # Add Default Folder for folders with id=0
+    folders[0] = 'NoFolder'
     return folders
 
 def create_sub_folders(api, toodle_notebook_id, folders):
@@ -96,10 +95,10 @@ def import_toodledo_notes(api, root_note_id, toodledo_folders, notebooks_cache, 
         too_date_created= nb_entry.get('date_added') + '000'
         too_date_modified= nb_entry.get('date_modified') + '000'
 
-        too_folder_name = toodledo_folders.get(too_folder_id) 
+        too_folder_name = toodledo_folders.get(too_folder_id,'') 
         joplin_folder_id = notebooks_cache.get(too_folder_name)       
         note_id=api.add_note(parent_id=joplin_folder_id, title=too_title, body=too_note, created_time=too_date_created, user_created_time=too_date_created, updated_time=too_date_modified, user_updated_time=too_date_modified)
-        print(str(index) + '/' +str(no_of_entries) + ' Added Note ' + too_title)       
+        print(str(index) + '/' +str(no_of_entries) + ' Added Note ' + too_title + ' to folder: ' + too_folder_name)       
 
 def import_toodledo_tasks(api, root_note_id, toodledo_folders, notebooks_cache, notebook_entries):
     no_of_entries = len(notebook_entries)
@@ -126,7 +125,7 @@ def import_toodledo_tasks(api, root_note_id, toodledo_folders, notebooks_cache, 
         else:
             too_tags=[]
 
-        too_folder_name = toodledo_folders.get(too_folder_id) 
+        too_folder_name = toodledo_folders.get(too_folder_id,'') 
         joplin_folder_id = notebooks_cache.get(too_folder_name)           
         note_id=api.add_note(parent_id=joplin_folder_id, title=too_title, body=too_note, created_time=too_date_created, user_created_time=too_date_created, updated_time=too_date_modified, user_updated_time=too_date_modified)
         for tag_title in too_tags:
@@ -139,7 +138,7 @@ def import_toodledo_tasks(api, root_note_id, toodledo_folders, notebooks_cache, 
                 tags_cache.update( {the_tag_title: tag_id})
                 api.add_tag_to_note(note_id=note_id, tag_id=tag_id)
             print('Added Tag ' + the_tag_title + ' to Note: ' + too_title)
-        print(str(index) + '/' +str(no_of_entries) + ' Added Task ' + too_title + ' id: ' + note_id)
+        print(str(index) + '/' +str(no_of_entries) + ' Added Task ' + too_title + ' to folder: ' + too_folder_name + ' id: ' + note_id)
 
 # main
 if __name__ == "__main__":

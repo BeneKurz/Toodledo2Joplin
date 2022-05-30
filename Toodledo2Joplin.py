@@ -7,8 +7,8 @@ import sys
 import xml.etree.ElementTree as ET
 
 # The API_TOKEN is created from the Joplin Desktop App using the Web Clipper
-# Put the Token into the file named here
-TOKEN_FILE='JOPLIN_API_TOKEN.txt'
+# Put the Token into the Variable API_TOKEN here
+API_TOKEN=''
 
 # Toodeldo Backup file created from here: https://www.toodledo.com/tools/import_export.php
 TOODLEDO_IMPORTFILE='backup_toodledo.xml'
@@ -142,12 +142,8 @@ def import_toodledo_tasks(api, root_note_id, toodledo_folders, notebooks_cache, 
 
 # main
 if __name__ == "__main__":
-    try:     
-        with open(TOKEN_FILE) as f:
-            lines = f.readlines()
-        API_TOKEN=lines[0]
-    except IOError:
-        print('Tokenfile ' + TOKEN_FILE + ' not found')
+    if len(API_TOKEN) == 0:
+        print('Variable API_TOKEN is empty or invalid: ' + API_TOKEN)
         sys.exit(-1)   
 
     try:
